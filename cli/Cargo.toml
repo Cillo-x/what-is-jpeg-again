@@ -1,0 +1,7 @@
+[package]
+name = "jpeg-encode"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+jpeg-core = { path = "../core" }
