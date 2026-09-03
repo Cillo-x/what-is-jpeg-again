@@ -6,3 +6,5 @@ use alloc::vec::Vec;
 
 mod color;
 mod error;
+
+pub use color::{YCbCrImage, rgb_to_ycbcr};
