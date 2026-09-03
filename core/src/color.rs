@@ -7,15 +7,23 @@ pub struct YCbCrImage {
 }
 
 pub fn rgb_to_ycbcr(rgb: &[u8], width: usize, height: usize) -> YCbCrImage {
-    let size = width * height * 3;
-    let mut y = Vec::with_capacity(size);
-    let mut cb = Vec::with_capacity(size);
-    let mut cr = Vec::with_capacity(size);
+    let expected = width * height * 3;
+    assert_eq!(
+        rgb.len(),
+        expected,
+        "RGB data len {} != expected {}",
+        rgb.len(),
+        expected
+    );
 
-    for chunk in rgb.chunks_exact(3) {
-        let r = chunk[0] as f32;
-        let g = chunk[1] as f32;
-        let b = chunk[2] as f32;
+    let mut y = Vec::with_capacity(expected);
+    let mut cb = Vec::with_capacity(expected);
+    let mut cr = Vec::with_capacity(expected);
+
+    for i in (0..expected).step_by(3) {
+        let r = rgb[i] as f32;
+        let g = rgb[i + 1] as f32;
+        let b = rgb[i + 2] as f32;
 
         y.push((0.299 * r + 0.587 * g + 0.114 * b).round() as u8);
         cb.push((-0.1687 * r - 0.3313 * g + 0.5 * b + 128.0).round() as u8);
@@ -53,13 +61,21 @@ mod tests {
     }
 
     #[test]
-    fn test_rgb_to_ycrcb() {
+    #[should_panic]
+    fn test_no_enough_data() {
+        let rgb = [0u8; 2];
+        rgb_to_ycbcr(&rgb, 1, 1);
+    }
+
+    #[test]
+    fn test_rgb_to_ycbcr() {
+        // R G B
         let test_rgb = vec![255, 0, 0, 0, 255, 0, 0, 0, 255, 128, 128, 128];
         let expected_y = vec![76, 150, 29, 128];
         let expected_cb = vec![85, 44, 255, 128];
         let expected_cr = vec![255, 21, 107, 128];
 
-        let img = rgb_to_ycbcr(&test_rgb, 4, 4);
+        let img = rgb_to_ycbcr(&test_rgb, 2, 2);
         assert_eq!(img.y, expected_y);
         assert_eq!(img.cb, expected_cb);
         assert_eq!(img.cr, expected_cr);
