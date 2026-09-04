@@ -9,3 +9,4 @@ mod dct;
 mod error;
 
 pub use color::{YCbCrImage, rgb_to_ycbcr};
+pub use dct::{BlockI16, BlockU8, Dct, NaiveDct};
