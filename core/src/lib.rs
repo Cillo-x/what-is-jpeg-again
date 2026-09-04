@@ -8,6 +8,7 @@ mod bitwriter;
 mod color;
 mod dct;
 mod error;
+mod huffman;
 mod quant;
 mod rle;
 mod zigzag;
