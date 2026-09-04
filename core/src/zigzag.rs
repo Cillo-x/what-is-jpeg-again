@@ -6,7 +6,7 @@ const JPEG_ZIGZAG_LUT: [usize; 64] = [
     52, 45, 38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63,
 ];
 
-pub fn zigzag_enc(blk: &BlockI16) -> [i16; 64] {
+pub fn zigzag_scan(blk: &BlockI16) -> [i16; 64] {
     let mut result = [0; 64];
     for i in 0..64 {
         let natural_index = JPEG_ZIGZAG_LUT[i];
@@ -33,7 +33,7 @@ mod tests {
             [99, 99, 99, 99, 99, 99, 99, 99],
             [99, 99, 99, 99, 99, 99, 99, 99],
         ];
-        assert_eq!(zigzag_enc(&blk)[0], 11)
+        assert_eq!(zigzag_scan(&blk)[0], 11)
     }
 
     #[test]
@@ -49,7 +49,7 @@ mod tests {
             [99, 99, 99, 99, 99, 99, 99, 99],
         ];
         let expected: [i16; 64] = array::from_fn(|i| if i < 10 { 11 + i as i16 } else { 99 });
-        let buf = zigzag_enc(&blk);
+        let buf = zigzag_scan(&blk);
         assert_eq!(buf, expected)
     }
 }
