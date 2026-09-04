@@ -1,9 +1,12 @@
+/// AC coeff pair
+/// `(run_length, raw_coefficient)`
 pub type AcPair = (u8, i16);
+
 pub const ZRL: AcPair = (15, 0);
 pub const EOB: AcPair = (0, 0);
 
-pub fn rle(buf: [i16; 64], prev_dc: i16) -> (i16, Vec<AcPair>) {
-    let diff_dc = buf[0] - prev_dc;
+pub fn rle(buf: [i16; 64], dc_prev: i16) -> (i16, Vec<AcPair>) {
+    let dc_diff = buf[0] - dc_prev;
 
     let mut result = Vec::with_capacity(32);
     let mut zero_count = 0;
@@ -22,7 +25,7 @@ pub fn rle(buf: [i16; 64], prev_dc: i16) -> (i16, Vec<AcPair>) {
     }
     result.push(EOB);
 
-    (diff_dc, result)
+    (dc_diff, result)
 }
 
 #[cfg(test)]
