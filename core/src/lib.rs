@@ -7,6 +7,8 @@ use alloc::vec::Vec;
 mod color;
 mod dct;
 mod error;
+mod quant;
 
 pub use color::{YCbCrImage, rgb_to_ycbcr};
 pub use dct::{BlockI16, BlockU8, Dct, NaiveDct};
+pub use quant::{QC, QY, quant, quant_mut};
