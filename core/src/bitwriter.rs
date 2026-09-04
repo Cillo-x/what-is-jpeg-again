@@ -95,4 +95,13 @@ mod tests {
         assert_eq!(bwriter.buf[1], 0b1111_0000);
         assert_eq!(bwriter.buf[2], 0b101_11111);
     }
+
+    #[test]
+    fn test_finish() {
+        let mut bwriter = BitWriter::new([0; 8]);
+        bwriter.write_bits(0b1001_1111_0000_101, 15);
+        let buf = bwriter.finish();
+        assert_eq!(buf[0], 0b1001_1111);
+        assert_eq!(buf[1], 0b0000_1011);
+    }
 }
