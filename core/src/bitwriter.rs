@@ -1,12 +1,12 @@
-pub struct BitWriter<W: AsMut<[u8]>> {
-    buf: W,
+pub struct BitWriter {
+    buf: Vec<u8>,
     current_byte: u8,
     bits_filled: usize,
-    written: usize,
+    pub written: usize,
 }
 
-impl<W: AsMut<[u8]>> BitWriter<W> {
-    pub fn new(buf: W) -> Self {
+impl BitWriter {
+    pub fn new(buf: Vec<u8>) -> Self {
         BitWriter {
             buf,
             bits_filled: 0,
@@ -34,12 +34,12 @@ impl<W: AsMut<[u8]>> BitWriter<W> {
 
     fn flush_byte(&mut self) {
         if self.bits_filled > 0 {
-            self.buf.as_mut()[self.written] = self.current_byte;
+            self.buf.push(self.current_byte);
             self.written += 1;
 
             // JPEG byte stuffing: insert 0x00 after 0xFF to avoid marker collision
             if self.current_byte == 0xFF {
-                self.buf.as_mut()[self.written] = 0x00;
+                self.buf.push(0x00);
                 self.written += 1;
             }
 
@@ -56,7 +56,7 @@ impl<W: AsMut<[u8]>> BitWriter<W> {
         }
     }
 
-    pub fn finish(mut self) -> W {
+    pub fn finish(mut self) -> Vec<u8> {
         self.flush();
         self.buf
     }
@@ -68,7 +68,7 @@ mod tests {
 
     #[test]
     fn test_smoke() {
-        let mut bwriter = BitWriter::new([0; 8]);
+        let mut bwriter = BitWriter::new(Vec::new());
         bwriter.write_bits(1, 8);
         bwriter.flush();
         assert_eq!(bwriter.buf[0], 1)
@@ -76,7 +76,7 @@ mod tests {
 
     #[test]
     fn test_part_byte() {
-        let mut bwriter = BitWriter::new([0; 8]);
+        let mut bwriter = BitWriter::new(Vec::new());
         bwriter.write_bits(0b1010, 4);
         bwriter.flush();
         assert_eq!(bwriter.buf[0], 0b1010_1111)
@@ -84,7 +84,7 @@ mod tests {
 
     #[test]
     fn test_cross_one_byte_write() {
-        let mut bwriter = BitWriter::new([0; 8]);
+        let mut bwriter = BitWriter::new(Vec::new());
         bwriter.write_bits(0b1010, 4);
         bwriter.write_bits(0, 8);
         bwriter.flush();
@@ -94,7 +94,7 @@ mod tests {
 
     #[test]
     fn test_cross_two_byte_write() {
-        let mut bwriter = BitWriter::new([0; 8]);
+        let mut bwriter = BitWriter::new(Vec::new());
         bwriter.write_bits(0b1010, 4);
         bwriter.write_bits(0b1001_1111_0000_101, 15);
         bwriter.flush();
@@ -105,7 +105,7 @@ mod tests {
 
     #[test]
     fn test_finish() {
-        let mut bwriter = BitWriter::new([0; 8]);
+        let mut bwriter = BitWriter::new(Vec::new());
         bwriter.write_bits(0b1001_1111_0000_101, 15);
         let buf = bwriter.finish();
         assert_eq!(buf[0], 0b1001_1111);
@@ -114,7 +114,7 @@ mod tests {
 
     #[test]
     fn test_0xff_escape() {
-        let mut bwriter = BitWriter::new([0; 8]);
+        let mut bwriter = BitWriter::new(Vec::new());
         bwriter.write_bits(0b1111, 4);
         bwriter.write_bits(0b1111_01, 6);
         bwriter.flush();
