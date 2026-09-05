@@ -36,6 +36,13 @@ impl<W: AsMut<[u8]>> BitWriter<W> {
         if self.bits_filled > 0 {
             self.buf.as_mut()[self.written] = self.current_byte;
             self.written += 1;
+
+            // JPEG byte stuffing: insert 0x00 after 0xFF to avoid marker collision
+            if self.current_byte == 0xFF {
+                self.buf.as_mut()[self.written] = 0x00;
+                self.written += 1;
+            }
+
             self.current_byte = 0;
             self.bits_filled = 0;
         }
@@ -103,5 +110,16 @@ mod tests {
         let buf = bwriter.finish();
         assert_eq!(buf[0], 0b1001_1111);
         assert_eq!(buf[1], 0b0000_1011);
+    }
+
+    #[test]
+    fn test_0xff_escape() {
+        let mut bwriter = BitWriter::new([0; 8]);
+        bwriter.write_bits(0b1111, 4);
+        bwriter.write_bits(0b1111_01, 6);
+        bwriter.flush();
+        assert_eq!(bwriter.written, 3);
+        assert_eq!(bwriter.buf[1], 0);
+        assert_eq!(bwriter.buf[2], 0b0111_1111)
     }
 }
