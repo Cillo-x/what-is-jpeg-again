@@ -1,4 +1,4 @@
-pub fn caculate_size_and_amp(raw: i16) -> (u8, u16) {
+pub fn calculate_size_and_amp(raw: i16) -> (u8, u16) {
     if raw == 0 {
         return (0, 0);
     }
@@ -114,7 +114,7 @@ mod tests {
 
         for t in tests {
             let (raw, expected) = t;
-            assert_eq!(caculate_size_and_amp(raw), expected);
+            assert_eq!(calculate_size_and_amp(raw), expected);
         }
     }
 
