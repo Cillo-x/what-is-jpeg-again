@@ -14,7 +14,7 @@ pub fn rle(buf: [i16; 64], dc_prev: i16) -> (i16, Vec<AcPair>) {
     for &coeff in buf.iter().skip(1) {
         if coeff == 0 {
             zero_count += 1;
-            if zero_count == 15 {
+            if zero_count == 16 {
                 result.push(ZRL);
                 zero_count = 0;
             }
@@ -23,7 +23,12 @@ pub fn rle(buf: [i16; 64], dc_prev: i16) -> (i16, Vec<AcPair>) {
             zero_count = 0;
         }
     }
-    result.push(EOB);
+    // EOB represents the remaining zero coefficients. When the last AC
+    // coefficient (index 63) is non-zero, the block is already complete and
+    // writing EOB would be consumed as the next block's DC Huffman code.
+    if zero_count > 0 {
+        result.push(EOB);
+    }
 
     (dc_diff, result)
 }
@@ -73,6 +78,48 @@ mod tests {
         });
         let (_, pairs) = rle(buf, 0);
         assert_eq!(pairs[0], ZRL);
-        assert_eq!(pairs[1], (1, 42))
+        assert_eq!(pairs[1], (0, 42))
+    }
+
+    #[test]
+    fn test_fifteen_zeros_are_not_zrl() {
+        let mut buf = [0i16; 64];
+        buf[16] = 42; // 15 AC zeros, then a non-zero coefficient
+
+        let (_, pairs) = rle(buf, 0);
+
+        assert_eq!(&pairs[..2], &[(15, 42), ZRL]);
+    }
+
+    #[test]
+    fn test_sixteen_zeros_use_zrl() {
+        let mut buf = [0i16; 64];
+        buf[17] = 42; // 16 AC zeros, then a non-zero coefficient
+
+        let (_, pairs) = rle(buf, 0);
+
+        assert_eq!(&pairs[..2], &[ZRL, (0, 42)]);
+    }
+
+    #[test]
+    fn test_fifteen_trailing_zeros_are_eob() {
+        let mut buf = [0i16; 64];
+        buf[48] = 42; // 15 AC zeros after the last non-zero coefficient
+
+        let (_, pairs) = rle(buf, 0);
+
+        assert_eq!(*pairs.last().unwrap(), EOB);
+        assert_eq!(pairs[pairs.len() - 2], (15, 42));
+    }
+
+    #[test]
+    fn test_full_block_does_not_end_with_eob() {
+        let buf = [42i16; 64];
+
+        let (_, pairs) = rle(buf, 0);
+
+        assert_eq!(pairs.len(), 63);
+        assert_eq!(*pairs.last().unwrap(), (0, 42));
+        assert!(!pairs.contains(&EOB));
     }
 }
