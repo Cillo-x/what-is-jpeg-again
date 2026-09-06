@@ -2,6 +2,7 @@ pub struct BitWriter {
     buf: Vec<u8>,
     current_byte: u8,
     bits_filled: usize,
+    /// Number of bytes written to 'buf', including JPEG byte-stuffing bytes
     pub written: usize,
 }
 
