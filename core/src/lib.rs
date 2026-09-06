@@ -10,6 +10,7 @@ mod dct;
 mod encoder;
 mod error;
 mod huffman;
+mod marker;
 mod quant;
 mod rle;
 mod zigzag;
@@ -21,6 +22,7 @@ pub use encoder::JpegEncoder;
 pub use huffman::{
     AcHuffmanTable, C_AC_HFT, C_DC_HFT, DcHuffmanTable, Y_AC_HFT, Y_DC_HFT, calculate_size_and_amp,
 };
+pub use marker::{write_app0, write_dht, write_dqt, write_eoi, write_sof0, write_soi, write_sos};
 pub use quant::{QC, QY, quant, quant_mut};
 pub use rle::{AcPair, rle};
 pub use zigzag::zigzag_scan;
