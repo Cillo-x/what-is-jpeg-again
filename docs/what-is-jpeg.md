@@ -71,12 +71,10 @@ $$F(u, v) = \frac{1}{4}C(u)C(v)[\sum_{i=0}^7\sum_{j=0}^7f(i, j)cos\frac{(2i+1)u\
 其中：
 
 $$
-C(x) = \left\{
-\begin{array}{rcl}
-\frac{1}{\sqrt2} & &{x = 0}\\
-1      &  &{otherwise}\\
-\end{array}
-\right.
+C(x) = \begin{cases}
+\frac{1}{\sqrt{2}} & x = 0 \\
+1 & \text{otherwise}
+\end{cases}
 $$
 
 经过离散余弦变换，我们将低频信号的权重放在了矩阵的左上角，高频信号的权重放在了矩阵的右下角。我们称左上角的相当大的数值为 DC 系数（直流系数），其余 63 个值为 AC 系数（交流系数）。这个过程并没有产生数据损失。由于人眼对高频信号识别不敏感，因此我们可以舍弃一些高频信号的数据以此提高压缩比。
