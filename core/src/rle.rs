@@ -1,3 +1,5 @@
+use alloc::vec::Vec;
+
 /// AC coeff pair
 /// `(run_length, raw_coefficient)`
 pub type AcPair = (u8, i16);

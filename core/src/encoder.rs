@@ -1,3 +1,5 @@
+use alloc::vec::Vec;
+
 use crate::{
     BitWriter, BlockU8, C_AC_HFT, C_DC_HFT, Dct, QC, QY, Y_AC_HFT, Y_DC_HFT,
     calculate_size_and_amp, quant, quant_mut, rgb_to_ycbcr, rle, write_app0, write_dht, write_dqt,

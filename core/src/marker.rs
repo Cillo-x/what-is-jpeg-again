@@ -1,3 +1,5 @@
+use alloc::vec::Vec;
+
 /// Start of Image
 const SOI: u8 = 0xD8;
 /// End of Image

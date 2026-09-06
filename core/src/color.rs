@@ -1,3 +1,5 @@
+use alloc::vec::Vec;
+
 pub struct YCbCrImage {
     pub width: usize,
     pub height: usize,
