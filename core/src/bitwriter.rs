@@ -17,6 +17,7 @@ impl BitWriter {
     }
 
     pub fn write_bits(&mut self, value: u16, mut n: usize) {
+        assert!(n <= 16);
         while n > 0 {
             let bits_to_take = core::cmp::min(n, 8 - self.bits_filled);
             let shift = n - bits_to_take;
@@ -122,5 +123,12 @@ mod tests {
         assert_eq!(bwriter.written, 3);
         assert_eq!(bwriter.buf[1], 0);
         assert_eq!(bwriter.buf[2], 0b0111_1111)
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_write_more_than_16_bit() {
+        let mut bwriter = BitWriter::new(Vec::new());
+        bwriter.write_bits(0b1111_0000, 20);
     }
 }
