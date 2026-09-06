@@ -1,6 +1,7 @@
 use crate::{
-    BitWriter, BlockU8, C_AC_HFT, C_DC_HFT, Dct, Y_AC_HFT, Y_DC_HFT, calculate_size_and_amp, quant,
-    quant_mut, rgb_to_ycbcr, rle, zigzag_scan,
+    BitWriter, BlockU8, C_AC_HFT, C_DC_HFT, Dct, QC, QY, Y_AC_HFT, Y_DC_HFT,
+    calculate_size_and_amp, quant, quant_mut, rgb_to_ycbcr, rle, write_app0, write_dht, write_dqt,
+    write_eoi, write_sof0, write_soi, write_sos, zigzag_scan,
 };
 
 pub struct JpegEncoder<D>
@@ -32,15 +33,26 @@ where
         }
     }
 
-    pub fn encode<W: AsMut<[u8]>>(
-        &mut self,
-        rgb: &[u8],
-        width: usize,
-        height: usize,
-        bw: &mut BitWriter<W>,
-    ) {
+    pub fn encode(&mut self, rgb: &[u8], width: usize, height: usize) -> Vec<u8> {
         assert_eq!(width % 8, 0);
         assert_eq!(height % 8, 0);
+
+        self.y_dc_prev = 0;
+        self.cb_dc_prev = 0;
+        self.cr_dc_prev = 0;
+
+        let mut buf = Vec::new();
+        write_soi(&mut buf);
+        write_app0(&mut buf);
+
+        let qy_zigzag = zigzag_scan(&QY).map(|x| x as u8);
+        let qc_zigzag = zigzag_scan(&QC).map(|x| x as u8);
+        write_dqt(&mut buf, &qy_zigzag, &qc_zigzag);
+        write_sof0(&mut buf, width as u16, height as u16);
+        write_dht(&mut buf);
+        write_sos(&mut buf);
+
+        let mut bw = BitWriter::new(buf);
         let ycbcr_img = rgb_to_ycbcr(rgb, width, height);
         for by in 0..height / 8 {
             for bx in 0..width / 8 {
@@ -80,27 +92,8 @@ where
                 bw.write_bits(amp, size as usize);
                 for (k, v) in y_ac_pairs {
                     let (s, v) = calculate_size_and_amp(v);
-                    bw.write_bits(
-                        Y_AC_HFT.codes[(k << 4 | s) as usize],
-                        Y_AC_HFT.sizes[(k << 4 | s) as usize] as usize,
-                    );
-                    bw.write_bits(v, s as usize);
-                }
-                // Cr Panel
-                let (cr_dc_diff, cr_ac_pairs) = rle(cr_zig, self.cr_dc_prev);
-                self.cr_dc_prev = cr[0][0];
-                let (size, amp) = calculate_size_and_amp(cr_dc_diff);
-                bw.write_bits(
-                    C_DC_HFT.codes[size as usize],
-                    C_DC_HFT.sizes[size as usize] as usize,
-                );
-                bw.write_bits(amp, size as usize);
-                for (k, v) in cr_ac_pairs {
-                    let (s, v) = calculate_size_and_amp(v);
-                    bw.write_bits(
-                        C_AC_HFT.codes[(k << 4 | s) as usize],
-                        C_AC_HFT.sizes[(k << 4 | s) as usize] as usize,
-                    );
+                    let symbol = (k << 4 | s) as usize;
+                    bw.write_bits(Y_AC_HFT.codes[symbol], Y_AC_HFT.sizes[symbol] as usize);
                     bw.write_bits(v, s as usize);
                 }
                 // Cb Panel
@@ -114,15 +107,34 @@ where
                 bw.write_bits(amp, size as usize);
                 for (k, v) in cb_ac_pairs {
                     let (s, v) = calculate_size_and_amp(v);
-                    bw.write_bits(
-                        C_AC_HFT.codes[(k << 4 | s) as usize],
-                        C_AC_HFT.sizes[(k << 4 | s) as usize] as usize,
+                    let symbol = (k << 4 | s) as usize;
+                    assert!(
+                        C_AC_HFT.sizes[symbol] != 0,
+                        "Cb block ({bx}, {by}): missing AC Huffman symbol {symbol:#04x}"
                     );
+                    bw.write_bits(C_AC_HFT.codes[symbol], C_AC_HFT.sizes[symbol] as usize);
+                    bw.write_bits(v, s as usize);
+                }
+                // Cr Panel
+                let (cr_dc_diff, cr_ac_pairs) = rle(cr_zig, self.cr_dc_prev);
+                self.cr_dc_prev = cr[0][0];
+                let (size, amp) = calculate_size_and_amp(cr_dc_diff);
+                bw.write_bits(
+                    C_DC_HFT.codes[size as usize],
+                    C_DC_HFT.sizes[size as usize] as usize,
+                );
+                bw.write_bits(amp, size as usize);
+                for (k, v) in cr_ac_pairs {
+                    let (s, v) = calculate_size_and_amp(v);
+                    let symbol = (k << 4 | s) as usize;
+                    bw.write_bits(C_AC_HFT.codes[symbol], C_AC_HFT.sizes[symbol] as usize);
                     bw.write_bits(v, s as usize);
                 }
             }
         }
-        bw.flush();
+        let mut buf = bw.finish();
+        write_eoi(&mut buf);
+        buf
     }
 }
 
@@ -149,9 +161,9 @@ mod tests {
         file.read_to_end(&mut data).unwrap();
 
         let mut encoder = JpegEncoder::new(NaiveDct);
-        let mut bw = BitWriter::new(vec![0u8; 256 * 256 * 3]);
-        encoder.encode(&data, 256, 256, &mut bw);
-        let outbuf = bw.finish();
-        write("../example/demo.raw.bin", outbuf).unwrap();
+        // let mut bw = BitWriter::new(Vec::with_capacity(4 * 1024));
+        let outbuf = encoder.encode(&data, 256, 256);
+        // let outbuf = bw.finish();
+        write("../playground/raw.jpg", outbuf).unwrap();
     }
 }
