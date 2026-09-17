@@ -27,9 +27,9 @@ pub fn rgb_to_ycbcr(rgb: &[u8], width: usize, height: usize) -> YCbCrImage {
         let g = rgb[i + 1] as f32;
         let b = rgb[i + 2] as f32;
 
-        y.push((0.299 * r + 0.587 * g + 0.114 * b).round() as u8);
-        cb.push((-0.1687 * r - 0.3313 * g + 0.5 * b + 128.0).round() as u8);
-        cr.push((0.5 * r - 0.4187 * g - 0.0813 * b + 128.0).round() as u8);
+        y.push((0.299 * r + 0.587 * g + 0.114 * b + 0.5) as u8);
+        cb.push((-0.1687 * r - 0.3313 * g + 0.5 * b + 128.0 + 0.5) as u8);
+        cr.push((0.5 * r - 0.4187 * g - 0.0813 * b + 128.0 + 0.5) as u8);
     }
 
     YCbCrImage {

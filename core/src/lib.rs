@@ -25,3 +25,12 @@ pub use marker::{write_app0, write_dht, write_dqt, write_eoi, write_sof0, write_
 pub use quant::{QC, QY, quant, quant_mut};
 pub use rle::{AcPair, rle};
 pub use zigzag::zigzag_scan;
+
+#[inline]
+pub(crate) fn round_i16(x: f32) -> i16 {
+    if x >= 0.0 {
+        (x + 0.5) as i16
+    } else {
+        (x - 0.5) as i16
+    }
+}

@@ -1,6 +1,6 @@
 use core::f32::consts::{FRAC_1_SQRT_2, PI};
 
-use crate::const_cos;
+use crate::{const_cos, round_i16};
 
 pub trait Dct {
     fn forward_dct(&self, blk: &BlockU8) -> BlockI16;
@@ -44,9 +44,10 @@ impl Dct for NaiveDct {
                         sum += temp[i][j] * cos_x * cos_y;
                     }
                 }
-                result[u][v] = (0.25 * C[u] * C[v] * sum)
-                    .clamp(i16::MIN as f32, i16::MAX as f32)
-                    .round() as i16;
+                let tmp = 0.25 * C[u] * C[v] * sum;
+                let tmp = tmp.clamp(i16::MIN as f32, i16::MAX as f32);
+
+                result[u][v] = round_i16(tmp);
             }
         }
 
