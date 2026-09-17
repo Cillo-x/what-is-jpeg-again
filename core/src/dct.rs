@@ -1,5 +1,7 @@
 use core::f32::consts::{FRAC_1_SQRT_2, PI};
 
+use crate::const_cos;
+
 pub trait Dct {
     fn forward_dct(&self, blk: &BlockU8) -> BlockI16;
 }
@@ -9,6 +11,20 @@ pub type BlockU8 = Block<u8>;
 pub type BlockI16 = Block<i16>;
 
 pub struct NaiveDct;
+
+const COS_TABLE: [[f32; 8]; 8] = {
+    let mut t = [[0.0f32; 8]; 8];
+    let mut u = 0;
+    while u < 8 {
+        let mut i = 0;
+        while i < 8 {
+            t[u][i] = const_cos((2 * i + 1) as f32 * u as f32 * PI / 16.0);
+            i += 1;
+        }
+        u += 1;
+    }
+    t
+};
 
 impl Dct for NaiveDct {
     fn forward_dct(&self, blk: &BlockU8) -> BlockI16 {
@@ -22,9 +38,9 @@ impl Dct for NaiveDct {
             for v in 0..8 {
                 let mut sum = 0.0;
                 for i in 0..8 {
+                    let cos_x = COS_TABLE[u][i];
                     for j in 0..8 {
-                        let cos_x = ((2 * i + 1) as f32 * u as f32 * PI / 16.0).cos();
-                        let cos_y = ((2 * j + 1) as f32 * v as f32 * PI / 16.0).cos();
+                        let cos_y = COS_TABLE[v][j];
                         sum += temp[i][j] * cos_x * cos_y;
                     }
                 }
