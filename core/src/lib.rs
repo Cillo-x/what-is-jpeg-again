@@ -3,6 +3,7 @@ extern crate alloc;
 
 mod bitwriter;
 mod color;
+mod const_cos;
 mod dct;
 mod encoder;
 mod error;
@@ -14,6 +15,7 @@ mod zigzag;
 
 pub use bitwriter::BitWriter;
 pub use color::{YCbCrImage, rgb_to_ycbcr};
+pub use const_cos::const_cos;
 pub use dct::{BlockI16, BlockU8, Dct, NaiveDct};
 pub use encoder::JpegEncoder;
 pub use huffman::{
